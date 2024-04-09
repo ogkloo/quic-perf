@@ -19,3 +19,7 @@ path = "src/quinn_throughput.rs"
 [[bin]]
 name = "quiche-throughput"
 path = "src/quiche_throughput.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
