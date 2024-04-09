@@ -4,3 +4,18 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+quiche = { version = "*" }
+quinn = { version = "*" }
+tokio = { version = "1", features = ["full"] }
+
+[[bin]]
+name = "tcp-reference"
+path = "src/tcp_throughput.rs"
+
+[[bin]]
+name = "quinn-throughput"
+path = "src/quinn_throughput.rs"
+
+[[bin]]
+name = "quiche-throughput"
+path = "src/quiche_throughput.rs"
