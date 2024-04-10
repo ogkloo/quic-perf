@@ -23,19 +23,19 @@ fn main() -> std::io::Result<()> {
     stream.write(format!("{:?}", bufsize).as_bytes())?;
     let now = Instant::now();
 
-    // while now.elapsed() < Duration::from_secs(1) {
-    //     let mut recv_buf = vec![0; bufsize];
+    while now.elapsed() < Duration::from_secs(1) {
+        let mut recv_buf = vec![0; bufsize];
 
-    //     // Timing recieve
-    //     stream.read(&mut recv_buf)?;
-    //     kb_sent += 1;
-    // }
-    let mut recv_buf = vec![0; bufsize];
-    stream.read_exact(&mut recv_buf)?;
-    let e = now.elapsed();
+        // Timing recieve
+        stream.read_exact(&mut recv_buf)?;
+        kb_sent += 1;
+    }
+    // let mut recv_buf = vec![0; bufsize];
+    // stream.read_exact(&mut recv_buf)?;
+    // let e = now.elapsed();
 
-    // println!("Times through loop: {:?}", (kb_sent));
-    println!("{:?}", e);
+    println!("bits sent: {:?}", (kb_sent * 8 * 1024) / 1_000_000);
+    // println!("{:?}", e);
 
     Ok(())
 }
