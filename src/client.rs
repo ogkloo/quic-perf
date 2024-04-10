@@ -18,24 +18,21 @@ fn main() -> std::io::Result<()> {
         server_port,
     );
 
-    let mut kb_sent: u64 = 0;
     let mut stream = TcpStream::connect(sk_addr)?;
     stream.write(format!("{:?}", bufsize).as_bytes())?;
-    let now = Instant::now();
 
-    while now.elapsed() < Duration::from_secs(1) {
-        let mut recv_buf = vec![0; bufsize];
+    let mut recv_buf = vec![0; bufsize];
+    for _ in 1..10 {
+        let mut kb_sent: u64 = 0;
+        let now = Instant::now();
+        while now.elapsed() < Duration::from_secs(1) {
+            // Timing recieve
+            stream.read_exact(&mut recv_buf)?;
+            kb_sent += 1;
+        }
 
-        // Timing recieve
-        stream.read_exact(&mut recv_buf)?;
-        kb_sent += 1;
+        println!("bits sent: {:?}", (kb_sent * 8 * 1024) / 1_000_000);
     }
-    // let mut recv_buf = vec![0; bufsize];
-    // stream.read_exact(&mut recv_buf)?;
-    // let e = now.elapsed();
-
-    println!("bits sent: {:?}", (kb_sent * 8 * 1024) / 1_000_000);
-    // println!("{:?}", e);
 
     Ok(())
 }
