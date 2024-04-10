@@ -2,7 +2,7 @@ use std::env;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 /// Client for all Rust versions.
 fn main() -> std::io::Result<()> {
@@ -15,22 +15,18 @@ fn main() -> std::io::Result<()> {
         server_port,
     );
 
-    let n = 20;
-
-    for _ in 1..n {
-        let mut stream = TcpStream::connect(sk_addr)?;
-
-        // Establish connection
-        stream.write("OK".as_bytes())?;
-        let mut recv_buf: [u8; 40 * 1024 ^ 8] = [0; 40 * 1024 ^ 8];
+    let mut kb_sent = 0;
+    let mut stream = TcpStream::connect(sk_addr)?;
+    stream.write("OK".as_bytes())?;
+    let now = Instant::now();
+    while now.elapsed() < Duration::from_secs(10) {
+        let mut recv_buf: [u8; 1024] = [0; 1024];
 
         // Timing recieve
-        let now = Instant::now();
         stream.read(&mut recv_buf)?;
-        let elapsed = now.elapsed();
-
-        println!("Time: {:.2?}", elapsed);
+        kb_sent += 1;
     }
+    println!("MB sent: {:?}", kb_sent / 1024);
 
     Ok(())
 }
