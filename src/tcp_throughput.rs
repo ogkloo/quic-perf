@@ -26,8 +26,8 @@ async fn test_client(mut stream: TcpStream) {
         }
     };
 
+    let send_buf = vec![0; send_bufsize];
     loop {
-        let send_buf = vec![0; send_bufsize];
         match stream.write(&send_buf).await {
             Ok(_) => {}
             Err(_) => break,
