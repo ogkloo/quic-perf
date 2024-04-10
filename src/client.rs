@@ -4,8 +4,6 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
-use tokio::time::error::Elapsed;
-
 /// Client for all Rust versions.
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
