@@ -29,7 +29,7 @@ fn main() -> std::io::Result<()> {
             kb_sent += 1;
         }
 
-        println!("bits sent: {:?}", (kb_sent * 8 * 1024) / 1_000_000);
+        println!("Rate {:?}Mbps", (kb_sent * 8 * 1024) / 1_000_000);
     }
 
     Ok(())
