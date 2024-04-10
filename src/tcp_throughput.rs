@@ -9,7 +9,7 @@ async fn test_client(mut stream: TcpStream) {
     let mut recv_buf: [u8; 128] = [0; 128];
 
     // 1Mb buffer, this should be configurable
-    let send_buf: [u8; 1024] = [0; 1024];
+    let send_buf: [u8; 10 ^ 9] = [0; 10 ^ 9];
 
     stream.read(&mut recv_buf).await.unwrap();
     loop {

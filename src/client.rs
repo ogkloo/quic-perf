@@ -15,18 +15,20 @@ fn main() -> std::io::Result<()> {
         server_port,
     );
 
-    let mut kb_sent = 0;
+    let mut kb_sent: u64 = 0;
     let mut stream = TcpStream::connect(sk_addr)?;
     stream.write("OK".as_bytes())?;
     let now = Instant::now();
-    while now.elapsed() < Duration::from_secs(10) {
-        let mut recv_buf: [u8; 1024] = [0; 1024];
+
+    while now.elapsed() < Duration::from_secs(1) {
+        let mut recv_buf: [u8; 10 ^ 9] = [0; 10 ^ 9];
 
         // Timing recieve
         stream.read(&mut recv_buf)?;
         kb_sent += 1;
     }
-    println!("MB sent: {:?}", kb_sent / 1024);
+
+    println!("kb sent: {:?}", (kb_sent));
 
     Ok(())
 }
