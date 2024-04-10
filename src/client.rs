@@ -27,11 +27,6 @@ fn main() -> std::io::Result<()> {
     let server_port = cli.port;
     let bufsize = cli.bufsize;
     
-    // let args: Vec<String> = env::args().collect();
-    // let server_addr: &str = &args[1];
-    // let server_port: u16 = args[2].parse::<u16>().unwrap();
-    // let bufsize: usize = args[3].parse::<usize>().unwrap();
-
     let sk_addr = SocketAddr::new(
         IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
         server_port,
