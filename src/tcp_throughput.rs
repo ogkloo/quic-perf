@@ -1,9 +1,38 @@
+use clap::Parser;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::{from_utf8, FromStr};
-use std::{env, usize};
+use std::usize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
+#[derive(Parser, Debug)]
+#[command(
+    version,
+    about = "Server for quic-perf.",
+    long_about = "An iperf-like tool for measuring 
+          performance across quic backends (and TCP) implemented in Rust."
+)]
+struct Args {
+    /// Address of quic-perf server.
+    #[arg(short = 's', long = "server")]
+    connection_addr: String,
+
+    /// Port of quic-perf server.
+    #[arg(short = 'p', long, default_value_t = 5201)]
+    port: u16,
+
+    /// Which backend to use.
+    #[arg(long)]
+    backend: Option<String>,
+}
+
+enum Proto {
+    Tcp,
+    Quiche,
+    Quinn,
+}
+
+/// Run a single TCP test for a client.
 async fn test_client(mut stream: TcpStream) {
     // wait for client to initiate
     let mut recv_buf: [u8; 128] = [0; 128];
@@ -38,20 +67,39 @@ async fn test_client(mut stream: TcpStream) {
 
 #[tokio::main]
 async fn main() {
-    let args: Vec<String> = env::args().collect();
-    let server_addr: &str = &args[1];
-    let server_port: u16 = args[2].parse::<u16>().unwrap();
+    let cli = Args::parse();
+    let server_addr = cli.connection_addr;
+    let server_port = cli.port;
+    let backend = match cli.backend {
+        Some(proto) => match proto.as_str() {
+            "TCP" => Proto::Tcp,
+            "Quiche" => Proto::Quiche,
+            "Quinn" => Proto::Quinn,
+            e => panic!("Unknown protocol: {}", e),
+        },
+        None => Proto::Tcp,
+    };
 
-    let sk_addr = SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::from_str(server_addr).unwrap()),
-        server_port,
-    );
+    match backend {
+        Proto::Tcp => {
+            let sk_addr = SocketAddr::new(
+                IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
+                server_port,
+            );
 
-    let listener = TcpListener::bind(sk_addr).await.unwrap();
+            let listener = TcpListener::bind(sk_addr).await.unwrap();
 
-    loop {
-        let (socket, _) = listener.accept().await.unwrap();
+            loop {
+                let (socket, _) = listener.accept().await.unwrap();
 
-        test_client(socket).await;
+                test_client(socket).await;
+            }
+        }
+        Proto::Quiche => {
+            unimplemented!("Quiche not finished")
+        }
+        Proto::Quinn => {
+            unimplemented!("Quinn not finished")
+        }
     }
 }

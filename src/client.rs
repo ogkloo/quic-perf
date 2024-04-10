@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
     version,
     about = "Client for quic-perf.",
     long_about = "An iperf-like tool for measuring 
-          performance across quic backends implemented in Rust."
+          performance across quic backends (and TCP) implemented in Rust."
 )]
 struct Args {
     /// Address of quic-perf server.
@@ -50,6 +50,15 @@ struct Args {
     /// Measured in bytes.
     #[arg(short, long)]
     max_transmission: Option<usize>,
+
+    /// Protocol to use.
+    #[arg(long)]
+    backend: Option<String>,
+}
+enum Proto {
+    Tcp,
+    Quiche,
+    Quinn,
 }
 
 /// Client for all Rust versions.
@@ -84,68 +93,83 @@ fn main() -> std::io::Result<()> {
     };
     let precision = cli.precision;
     let max_transmission = cli.max_transmission;
+    let backend = match cli.backend {
+        Some(proto) => match proto.as_str() {
+            "TCP" => Proto::Tcp,
+            "Quiche" => Proto::Quiche,
+            "Quinn" => Proto::Quinn,
+            e => panic!("Unknown protocol: {}", e),
+        },
+        None => Proto::Tcp,
+    };
 
-    let sk_addr = SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
-        server_port,
-    );
+    match backend {
+        Proto::Tcp => {
+            let sk_addr = SocketAddr::new(
+                IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
+                server_port,
+            );
 
-    let mut stream = TcpStream::connect(sk_addr)?;
-    stream.write(format!("{:?}", bufsize).as_bytes())?;
+            let mut stream = TcpStream::connect(sk_addr)?;
+            stream.write(format!("{:?}", bufsize).as_bytes())?;
 
-    println!("Interval \t Transfer \t Rate");
-    let mut recv_buf = vec![0; bufsize];
-    let mut total_buffers_sent: usize = 0;
-    for t in 0..time {
-        let mut buffers_sent: usize = 0;
-        let now = Instant::now();
-        // If the user has set a maximum size for the interval.
-        let mut approx_rate: f64 = 0.0;
-        while now.elapsed() < Duration::from_secs(1) {
-            stream.read_exact(&mut recv_buf)?;
-            buffers_sent += 1;
-            if let Some(m_tr) = max_transmission {
-                if m_tr < (buffers_sent * bufsize) {
-                    let time_spent = now.elapsed().as_secs_f64();
-                    approx_rate = (buffers_sent * bufsize) as f64 / time_spent;
-                    println!("{}", time_spent);
-                    break;
+            println!("Interval \t Transfer \t Rate");
+            let mut recv_buf = vec![0; bufsize];
+            let mut total_buffers_sent: usize = 0;
+            for t in 0..time {
+                let mut buffers_sent: usize = 0;
+                let now = Instant::now();
+                // If the user has set a maximum size for the interval.
+                let mut approx_rate: f64 = 0.0;
+                while now.elapsed() < Duration::from_secs(1) {
+                    stream.read_exact(&mut recv_buf)?;
+                    buffers_sent += 1;
+                    if let Some(m_tr) = max_transmission {
+                        if m_tr < (buffers_sent * bufsize) {
+                            let time_spent = now.elapsed().as_secs_f64();
+                            approx_rate = (buffers_sent * bufsize) as f64 / time_spent;
+                            println!("{}", time_spent);
+                            break;
+                        }
+                    }
                 }
+
+                if let Some(_) = max_transmission {
+                    println!(
+                        "{} \t\t {}{} \t {:.*}{}/s",
+                        t + 1,
+                        (buffers_sent * 8 * bufsize) / format,
+                        format_string,
+                        precision,
+                        approx_rate / format as f64,
+                        format_string
+                    );
+                } else {
+                    println!(
+                        "{} \t\t {:.*}{} \t {:.*}{}/s",
+                        t + 1,
+                        precision,
+                        (buffers_sent * 8 * bufsize) as f64 / format as f64,
+                        format_string,
+                        precision,
+                        (buffers_sent as f64 * 8.0 * bufsize as f64) / format as f64,
+                        format_string
+                    );
+                }
+                total_buffers_sent += buffers_sent;
             }
-        }
 
-        if let Some(_) = max_transmission {
             println!(
-                "{} \t\t {}{} \t {:.*}{}/s",
-                t + 1,
-                (buffers_sent * 8 * bufsize) / format,
-                format_string,
+                "Average rate over {} seconds: {:.*}{}",
+                time,
                 precision,
-                approx_rate / format as f64,
-                format_string
-            );
-        } else {
-            println!(
-                "{} \t\t {:.*}{} \t {:.*}{}/s",
-                t + 1,
-                precision,
-                (buffers_sent * 8 * bufsize) as f64 / format as f64,
-                format_string,
-                precision,
-                (buffers_sent as f64 * 8.0 * bufsize as f64) / format as f64,
+                (total_buffers_sent as f64 * 8.0 * bufsize as f64) / (format * time) as f64,
                 format_string
             );
         }
-        total_buffers_sent += buffers_sent;
+        Proto::Quiche => unimplemented!("Quiche not finished"),
+        Proto::Quinn => unimplemented!("Quinn not finished"),
     }
-
-    println!(
-        "Average rate over {} seconds: {:.*}{}",
-        time,
-        precision,
-        (total_buffers_sent as f64 * 8.0 * bufsize as f64) / (format * time) as f64,
-        format_string
-    );
 
     Ok(())
 }
