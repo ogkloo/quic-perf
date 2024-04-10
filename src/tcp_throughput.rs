@@ -7,6 +7,7 @@ use tokio::net::{TcpListener, TcpStream};
 async fn test_client(mut stream: TcpStream) {
     // wait for client to initiate
     let mut recv_buf: [u8; 128] = [0; 128];
+    println!("Connection from {}", stream.peer_addr().unwrap());
 
     stream.read(&mut recv_buf).await.unwrap();
     let send_bufsize = match from_utf8(&recv_buf) {
