@@ -4,6 +4,8 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
 use std::time::{Duration, Instant};
 
+use tokio::time::error::Elapsed;
+
 /// Client for all Rust versions.
 fn main() -> std::io::Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -21,15 +23,19 @@ fn main() -> std::io::Result<()> {
     stream.write(format!("{:?}", bufsize).as_bytes())?;
     let now = Instant::now();
 
-    while now.elapsed() < Duration::from_secs(1) {
-        let mut recv_buf = vec![0; bufsize];
+    // while now.elapsed() < Duration::from_secs(1) {
+    //     let mut recv_buf = vec![0; bufsize];
 
-        // Timing recieve
-        stream.read(&mut recv_buf)?;
-        kb_sent += 1;
-    }
+    //     // Timing recieve
+    //     stream.read(&mut recv_buf)?;
+    //     kb_sent += 1;
+    // }
+    let mut recv_buf = vec![0; bufsize];
+    stream.read_exact(&mut recv_buf)?;
+    let e = now.elapsed();
 
-    println!("Times through loop: {:?}", (kb_sent));
+    // println!("Times through loop: {:?}", (kb_sent));
+    println!("{:?}", e);
 
     Ok(())
 }
