@@ -1,6 +1,6 @@
-use std::env;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::str::FromStr;
+use std::str::{from_utf8, FromStr};
+use std::{env, usize};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
@@ -8,11 +8,26 @@ async fn test_client(mut stream: TcpStream) {
     // wait for client to initiate
     let mut recv_buf: [u8; 128] = [0; 128];
 
-    // 1Mb buffer, this should be configurable
-    let send_buf: [u8; 10 ^ 9] = [0; 10 ^ 9];
-
     stream.read(&mut recv_buf).await.unwrap();
+    let send_bufsize = match from_utf8(&recv_buf) {
+        Ok(s) => {
+            let s = s.trim_matches(char::from(0));
+            match s.parse::<usize>() {
+                Ok(s) => s,
+                Err(_) => {
+                    println!("Parsing failed!");
+                    return;
+                }
+            }
+        }
+        Err(_) => {
+            println!("Parsing failed!");
+            return;
+        }
+    };
+
     loop {
+        let send_buf = vec![0; send_bufsize];
         match stream.write(&send_buf).await {
             Ok(_) => {}
             Err(_) => break,
