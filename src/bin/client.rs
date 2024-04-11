@@ -200,7 +200,7 @@ async fn main() -> std::io::Result<()> {
                 format_string
             );
         }
-        Proto::Quiche => unimplemented!("Quiche not finished"),
+        Proto::Quiche => todo!("Quiche not finished"),
         Proto::Quinn => {
             // let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
             let client_addr = "127.0.0.1:43422".parse::<SocketAddr>().unwrap();
@@ -209,7 +209,7 @@ async fn main() -> std::io::Result<()> {
             let connection = client
                 .connect_with(client_config, sk_addr, "example.com")
                 .unwrap()
-                .await;
+                .await?;
         }
     }
 
