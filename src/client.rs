@@ -1,7 +1,11 @@
 use clap::Parser;
+use quinn::ClientConfig;
+use rustls::client;
+use std::error::Error;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 #[derive(Parser, Debug)]
@@ -59,6 +63,48 @@ enum Proto {
     Tcp,
     Quiche,
     Quinn,
+}
+
+// Implementation of `ServerCertVerifier` that verifies everything as trustworthy.
+struct SkipServerVerification;
+
+impl SkipServerVerification {
+    fn new() -> Arc<Self> {
+        Arc::new(Self)
+    }
+}
+
+impl rustls::client::ServerCertVerifier for SkipServerVerification {
+    fn verify_server_cert(
+        &self,
+        _end_entity: &rustls::Certificate,
+        _intermediates: &[rustls::Certificate],
+        _server_name: &rustls::ServerName,
+        _scts: &mut dyn Iterator<Item = &[u8]>,
+        _ocsp_response: &[u8],
+        _now: std::time::SystemTime,
+    ) -> Result<rustls::client::ServerCertVerified, rustls::Error> {
+        Ok(rustls::client::ServerCertVerified::assertion())
+    }
+}
+
+fn configure_client() -> ClientConfig {
+    let crypto = rustls::ClientConfig::builder()
+        .with_safe_defaults()
+        .with_custom_certificate_verifier(SkipServerVerification::new())
+        .with_no_client_auth();
+
+    ClientConfig::new(Arc::new(crypto))
+}
+
+/// Use the rcgen crate to make self-signed certs
+fn generate_self_signed_cert() -> Result<(rustls::Certificate, rustls::PrivateKey), Box<dyn Error>>
+{
+    let alt_name = vec!["localhost".to_string()];
+    let rcgen::CertifiedKey {cert, key_pair: _ }: rcgen::CertifiedKey = rcgen::generate_simple_self_signed(alt_name)?;
+    let key = rustls::PrivateKey(cert.der().to_vec());
+    let cert = rustls::Certificate(cert.der().to_vec());
+    Ok((cert, key))
 }
 
 /// Client for all Rust versions.
@@ -168,7 +214,14 @@ fn main() -> std::io::Result<()> {
             );
         }
         Proto::Quiche => unimplemented!("Quiche not finished"),
-        Proto::Quinn => unimplemented!("Quinn not finished"),
+        Proto::Quinn => {
+            // for the server side:
+            // generate_self_signed_cert()
+            // let server_config = quinn::ServerConfig::with_single_cert(certs, key)?;
+            let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
+            let client_config = configure_client();
+            // let server = quinn::Endpoint::server(config, addr)
+        }
     }
 
     Ok(())

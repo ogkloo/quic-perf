@@ -6,8 +6,10 @@ edition = "2021"
 [dependencies]
 quiche = { version = "*" }
 quinn = { version = "*" }
+rustls = { version = "*", features = ["dangerous_configuration", "quic"] }
 tokio = { version = "1", features = ["full"] }
 clap = {version="*", features = ["derive"]}
+rcgen = "*"
 
 [[bin]]
 name = "tcp-reference"
