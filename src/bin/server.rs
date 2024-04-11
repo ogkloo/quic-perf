@@ -5,7 +5,7 @@ use std::usize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
-use quic_perf::{Proto, generate_self_signed_cert};
+use quic_perf::{generate_self_signed_cert, Proto};
 
 #[derive(Parser, Debug)]
 #[command(
@@ -24,7 +24,7 @@ struct Args {
     port: u16,
 
     /// Which backend to use.
-    #[arg(long)]
+    #[arg(short, long)]
     backend: Option<String>,
 }
 
@@ -98,7 +98,8 @@ async fn main() {
             // for the server side:
             let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
             let (cert, key) = generate_self_signed_cert().expect("Cert generation failed.");
-            let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key).expect("Cert config failed.");
+            let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key)
+                .expect("Cert config failed.");
             let server = quinn::Endpoint::server(server_config, server_addr);
         }
     }

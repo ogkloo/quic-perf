@@ -1,6 +1,5 @@
 use clap::Parser;
 use quinn::ClientConfig;
-use rustls::client;
 use std::error::Error;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
