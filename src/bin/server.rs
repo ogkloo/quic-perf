@@ -92,10 +92,10 @@ async fn main() {
             }
         }
         Proto::Quiche => {
-            unimplemented!("Quiche not finished")
+            todo!("Quiche not finished")
         }
         Proto::Quinn => {
-            unimplemented!("Quinn not finished")
+            todo!("Quinn not finished")
         }
     }
 }
