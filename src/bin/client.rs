@@ -204,12 +204,22 @@ async fn main() -> std::io::Result<()> {
         Proto::Quinn => {
             // let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
             let client_addr = "127.0.0.1:43422".parse::<SocketAddr>().unwrap();
+            println!("Connecting to {:?} on {:?}", sk_addr, client_addr);
             let client_config = configure_client();
             let client = quinn::Endpoint::client(client_addr).unwrap();
             let connection = client
                 .connect_with(client_config, sk_addr, "example.com")
                 .unwrap()
                 .await?;
+            println!("Connected to {:?} on {:?}", sk_addr, client_addr);
+            let (mut send, mut recv) = connection
+                .open_bi()
+                .await?;
+
+            send.write_all(b"test").await?;
+            send.finish().await?;
+            
+            let received = recv.read_to_end(10).await;
         }
     }
 

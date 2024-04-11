@@ -103,6 +103,14 @@ async fn main() {
             let server = quinn::Endpoint::server(server_config, server_addr).unwrap();
             while let Some(handshake) = server.accept().await {
                 let connection = handshake.await.unwrap();
+                while let Ok((mut send, mut recv)) = connection.accept_bi().await {
+                    // Because it is a bidirectional stream, we can both send and receive.
+                    println!("request: {:?}", recv.read_to_end(50).await.unwrap());
+            
+                    send.write_all(b"response").await.unwrap();
+                    send.finish().await.unwrap();
+                }
+
             }
         }
     }
