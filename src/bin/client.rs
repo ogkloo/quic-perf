@@ -1,5 +1,6 @@
 use clap::Parser;
 use quinn::ClientConfig;
+use rustls::client;
 use std::error::Error;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
@@ -94,7 +95,8 @@ fn configure_client() -> ClientConfig {
 }
 
 /// Client for all Rust versions.
-fn main() -> std::io::Result<()> {
+#[tokio::main]
+async fn main() -> std::io::Result<()> {
     let cli = Args::parse();
     let server_addr = cli.connection_addr;
     let server_port = cli.port;
@@ -135,13 +137,12 @@ fn main() -> std::io::Result<()> {
         None => Proto::Tcp,
     };
 
+    let sk_addr = SocketAddr::new(
+        IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
+        server_port,
+    );
     match backend {
         Proto::Tcp => {
-            let sk_addr = SocketAddr::new(
-                IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
-                server_port,
-            );
-
             let mut stream = TcpStream::connect(sk_addr)?;
             stream.write(format!("{:?}", bufsize).as_bytes())?;
 
@@ -201,8 +202,11 @@ fn main() -> std::io::Result<()> {
         }
         Proto::Quiche => unimplemented!("Quiche not finished"),
         Proto::Quinn => {
-            let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
+            // let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
+            let client_addr = "127.0.0.1:5000".parse::<SocketAddr>().unwrap();
             let client_config = configure_client();
+            let client = quinn::Endpoint::client(client_addr).unwrap();
+            client.connect_with(client_config, sk_addr, "example.com");
         }
     }
 

@@ -100,7 +100,10 @@ async fn main() {
             let (cert, key) = generate_self_signed_cert().expect("Cert generation failed.");
             let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key)
                 .expect("Cert config failed.");
-            let server = quinn::Endpoint::server(server_config, server_addr);
+            let server = quinn::Endpoint::server(server_config, server_addr).unwrap();
+            while let Some(handshake) = server.accept().await {
+                let connection = handshake.await.unwrap();
+            }
         }
     }
 }
