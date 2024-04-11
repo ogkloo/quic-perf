@@ -76,12 +76,13 @@ async fn main() {
         None => Proto::Tcp,
     };
 
+    let sk_addr = SocketAddr::new(
+        IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
+        server_port,
+    );
+
     match backend {
         Proto::Tcp => {
-            let sk_addr = SocketAddr::new(
-                IpAddr::V4(Ipv4Addr::from_str(&server_addr).unwrap()),
-                server_port,
-            );
 
             let listener = TcpListener::bind(sk_addr).await.unwrap();
 
@@ -96,12 +97,11 @@ async fn main() {
         }
         Proto::Quinn => {
             // for the server side:
-            let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
             let (cert, key) = generate_self_signed_cert().expect("Cert generation failed");
             let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key)
                 .expect("Cert config failed");
-            let server = quinn::Endpoint::server(server_config, server_addr).unwrap();
-            println!("Waiting for connection on {:?}", server);
+            let server = quinn::Endpoint::server(server_config, sk_addr).unwrap();
+            println!("Waiting for connection");
             while let Some(handshake) = server.accept().await {
                 let connection = handshake.await.unwrap();
                 println!("Connection established from {:?}", connection);
