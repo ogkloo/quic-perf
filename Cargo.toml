@@ -1,5 +1,5 @@
 [package]
-name = "quiche-scratch"
+name = "quic-perf"
 version = "0.1.0"
 edition = "2021"
 
@@ -8,21 +8,13 @@ quiche = { version = "*" }
 quinn = { version = "*" }
 rustls = { version = "*", features = ["dangerous_configuration", "quic"] }
 tokio = { version = "1", features = ["full"] }
-clap = {version="*", features = ["derive"]}
+clap = { version="*", features = ["derive"] }
 rcgen = "*"
 
 [[bin]]
 name = "tcp-reference"
-path = "src/tcp_throughput.rs"
-
-[[bin]]
-name = "quinn-throughput"
-path = "src/quinn_throughput.rs"
-
-[[bin]]
-name = "quiche-throughput"
-path = "src/quiche_throughput.rs"
+path = "src/bin/tcp_throughput.rs"
 
 [[bin]]
 name = "client"
-path = "src/client.rs"
+path = "src/bin/client.rs"

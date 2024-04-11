@@ -5,6 +5,8 @@ use std::usize;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 
+use quic_perf::Proto;
+
 #[derive(Parser, Debug)]
 #[command(
     version,
@@ -24,12 +26,6 @@ struct Args {
     /// Which backend to use.
     #[arg(long)]
     backend: Option<String>,
-}
-
-enum Proto {
-    Tcp,
-    Quiche,
-    Quinn,
 }
 
 /// Run a single TCP test for a client.

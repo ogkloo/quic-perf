@@ -8,6 +8,8 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use quic_perf::Proto;
+
 #[derive(Parser, Debug)]
 #[command(
     version,
@@ -58,11 +60,6 @@ struct Args {
     /// Protocol to use.
     #[arg(long)]
     backend: Option<String>,
-}
-enum Proto {
-    Tcp,
-    Quiche,
-    Quinn,
 }
 
 // Implementation of `ServerCertVerifier` that verifies everything as trustworthy.

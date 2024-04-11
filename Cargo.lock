@@ -428,6 +428,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "quic-perf"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "quiche",
+ "quinn",
+ "rcgen",
+ "rustls",
+ "tokio",
+]
+
+[[package]]
 name = "quiche"
 version = "0.20.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -445,18 +457,6 @@ dependencies = [
  "slab",
  "smallvec",
  "winapi",
-]
-
-[[package]]
-name = "quiche-scratch"
-version = "0.1.0"
-dependencies = [
- "clap",
- "quiche",
- "quinn",
- "rcgen",
- "rustls",
- "tokio",
 ]
 
 [[package]]
