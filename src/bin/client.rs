@@ -62,7 +62,7 @@ struct Args {
     backend: Option<String>,
 }
 
-// Implementation of `ServerCertVerifier` that verifies everything as trustworthy.
+/// Implementation of `ServerCertVerifier` that verifies everything as trustworthy.
 struct SkipServerVerification;
 
 impl SkipServerVerification {
@@ -92,16 +92,6 @@ fn configure_client() -> ClientConfig {
         .with_no_client_auth();
 
     ClientConfig::new(Arc::new(crypto))
-}
-
-/// Use the rcgen crate to make self-signed certs
-fn generate_self_signed_cert() -> Result<(rustls::Certificate, rustls::PrivateKey), Box<dyn Error>>
-{
-    let alt_name = vec!["localhost".to_string()];
-    let rcgen::CertifiedKey {cert, key_pair: _ }: rcgen::CertifiedKey = rcgen::generate_simple_self_signed(alt_name)?;
-    let key = rustls::PrivateKey(cert.der().to_vec());
-    let cert = rustls::Certificate(cert.der().to_vec());
-    Ok((cert, key))
 }
 
 /// Client for all Rust versions.
@@ -212,12 +202,8 @@ fn main() -> std::io::Result<()> {
         }
         Proto::Quiche => unimplemented!("Quiche not finished"),
         Proto::Quinn => {
-            // for the server side:
-            // generate_self_signed_cert()
-            // let server_config = quinn::ServerConfig::with_single_cert(certs, key)?;
             let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
             let client_config = configure_client();
-            // let server = quinn::Endpoint::server(config, addr)
         }
     }
 
