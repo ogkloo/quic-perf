@@ -12,8 +12,8 @@ clap = { version="*", features = ["derive"] }
 rcgen = "*"
 
 [[bin]]
-name = "tcp-reference"
-path = "src/bin/tcp_throughput.rs"
+name = "server"
+path = "src/bin/server.rs"
 
 [[bin]]
 name = "client"
