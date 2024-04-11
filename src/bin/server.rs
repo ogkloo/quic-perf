@@ -97,12 +97,14 @@ async fn main() {
         Proto::Quinn => {
             // for the server side:
             let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
-            let (cert, key) = generate_self_signed_cert().expect("Cert generation failed.");
+            let (cert, key) = generate_self_signed_cert().expect("Cert generation failed");
             let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key)
-                .expect("Cert config failed.");
+                .expect("Cert config failed");
             let server = quinn::Endpoint::server(server_config, server_addr).unwrap();
+            println!("Waiting for connection on {:?}", server);
             while let Some(handshake) = server.accept().await {
                 let connection = handshake.await.unwrap();
+                println!("Connection established from {:?}", connection);
                 while let Ok((mut send, mut recv)) = connection.accept_bi().await {
                     // Because it is a bidirectional stream, we can both send and receive.
                     println!("request: {:?}", recv.read_to_end(50).await.unwrap());
