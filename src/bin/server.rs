@@ -141,7 +141,10 @@ async fn main() {
                         };
                     }
 
-                    send.finish().await.unwrap();
+                    match send.finish().await {
+                        Ok(_) => {},
+                        Err(_) => {}
+                    }
                 }
 
             }

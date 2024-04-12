@@ -203,7 +203,7 @@ async fn main() -> std::io::Result<()> {
             // TODO: Make this actually random so it doesn't potentially fail to bind.
             // 
             // As is, if port 43422 is taken the client will just die.
-            let client_addr = "127.0.0.1:43422".parse::<SocketAddr>().unwrap();
+            let client_addr = "0.0.0.0:43422".parse::<SocketAddr>().unwrap();
             println!("Connecting to {:?} on {:?}", sk_addr, client_addr);
             // Configure crypto
             let client_config = configure_client();
