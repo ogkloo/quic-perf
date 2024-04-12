@@ -1,7 +1,5 @@
 use clap::Parser;
 use quinn::ClientConfig;
-use rustls::client;
-use std::error::Error;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
@@ -258,8 +256,6 @@ async fn main() -> std::io::Result<()> {
                 (total_buffers_sent as f64 * 8.0 * bufsize as f64) / (format * time) as f64,
                 format_string
             );
-            
-            let received = recv.read_to_end(10).await;
         }
     }
 
