@@ -198,7 +198,11 @@ async fn main() -> std::io::Result<()> {
                 format_string
             );
         }
-        Proto::Quiche => todo!("Quiche not finished"),
+
+        Proto::Quiche => {
+            todo!("Quiche not finished");
+        }
+
         Proto::Quinn => {
             // TODO: Make this actually random so it doesn't potentially fail to bind.
             // 
