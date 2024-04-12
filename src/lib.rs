@@ -24,3 +24,10 @@ pub fn generate_self_signed_cert(
         rustls::PrivateKey(cert.serialize_private_key_der()),
     ))
 }
+
+// Taken from Quiche example
+pub fn hex_dump(buf: &[u8]) -> String {
+    let vec: Vec<String> = buf.iter().map(|b| format!("{b:02x}")).collect();
+
+    vec.join("")
+}

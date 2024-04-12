@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 use ring::rand::*;
 
-use quic_perf::Proto;
+use quic_perf::{hex_dump, Proto};
 
 const MAX_DATAGRAM_SIZE: usize = 1350;
 
@@ -244,6 +244,13 @@ async fn main() -> std::io::Result<()> {
             let socket_addr = socket.local_addr().unwrap();
             let mut conn = quiche::connect(None, &scid, socket_addr, sk_addr, &mut config)
                 .expect("Failed to connect to server");
+
+            println!(
+                "Connecting to {:} on {:} with SCID {:}",
+                sk_addr,
+                socket_addr,
+                hex_dump(&scid)
+            );
 
             let mut buf = [0; 65535];
             let mut out = [0; MAX_DATAGRAM_SIZE];
