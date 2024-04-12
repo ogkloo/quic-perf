@@ -96,20 +96,50 @@ async fn main() {
             todo!("Quiche not finished")
         }
         Proto::Quinn => {
-            // for the server side:
-            let (cert, key) = generate_self_signed_cert().expect("Cert generation failed");
+            // Generate self-signed certs for convenience.
+            let (cert, key) = generate_self_signed_cert().expect("Certificate generation failed");
             let server_config = quinn::ServerConfig::with_single_cert(vec![cert], key)
-                .expect("Cert config failed");
+                .expect("Certificate config failed");
+            // Spin up server with self-signed config.
             let server = quinn::Endpoint::server(server_config, sk_addr).unwrap();
             println!("Waiting for connection");
+
+            // Wait for clients.
             while let Some(handshake) = server.accept().await {
                 let connection = handshake.await.unwrap();
                 println!("Connection established from {:?}", connection);
+
+                // Wait for bidirectional streams.
                 while let Ok((mut send, mut recv)) = connection.accept_bi().await {
-                    // Because it is a bidirectional stream, we can both send and receive.
-                    println!("request: {:?}", recv.read_to_end(50).await.unwrap());
-            
-                    send.write_all(b"response").await.unwrap();
+                    // Set up
+                    let send_bufsize = match from_utf8(&recv.read_to_end(
+                                                                128)
+                                                                .await
+                                                                .unwrap()) {
+                         Ok(s) => {
+                             let s = s.trim_matches(char::from(0));
+                             match s.parse::<usize>() {
+                                 Ok(s) => s,
+                                 Err(_) => {
+                                     println!("Parsing failed!");
+                                     return;
+                                 }
+                             }
+                         }
+                         Err(_) => {
+                             println!("Parsing failed!");
+                             return;
+                         }
+                    };
+
+                    let send_buf = vec![0; send_bufsize];
+                    loop {
+                        match send.write_all(&send_buf).await {
+                            Ok(_) => {},
+                            Err(_) => break,
+                        };
+                    }
+
                     send.finish().await.unwrap();
                 }
 

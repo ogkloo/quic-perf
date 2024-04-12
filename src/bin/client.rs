@@ -202,22 +202,62 @@ async fn main() -> std::io::Result<()> {
         }
         Proto::Quiche => todo!("Quiche not finished"),
         Proto::Quinn => {
-            // let server_addr = "127.0.0.1:5001".parse::<SocketAddr>().unwrap();
+            // TODO: Make this actually random so it doesn't potentially fail to bind.
+            // 
+            // As is, if port 43422 is taken the client will just die.
             let client_addr = "127.0.0.1:43422".parse::<SocketAddr>().unwrap();
             println!("Connecting to {:?} on {:?}", sk_addr, client_addr);
+            // Configure crypto
             let client_config = configure_client();
             let client = quinn::Endpoint::client(client_addr).unwrap();
+            // Establish connection
             let connection = client
                 .connect_with(client_config, sk_addr, "example.com")
                 .unwrap()
                 .await?;
             println!("Connected to {:?} on {:?}", sk_addr, client_addr);
+
             let (mut send, mut recv) = connection
                 .open_bi()
                 .await?;
 
-            send.write_all(b"test").await?;
+            // Send buffer size preference
+            send.write_all(format!("{:?}", bufsize).as_bytes()).await?;
             send.finish().await?;
+
+            println!("Interval \t Transfer \t Rate");
+            let mut total_buffers_sent = 0;
+
+            for t in 0..time {
+                let mut buffers_sent = 0;
+                let now = Instant::now();
+
+                while now.elapsed() < Duration::from_secs(1) {
+                    let _ = recv.read_to_end(bufsize*2).await;
+                    buffers_sent += 1;
+                }
+
+                println!(
+                    "{} \t\t {:.*}{} \t {:.*}{}/s",
+                    t + 1,
+                    precision,
+                    (buffers_sent * 8 * bufsize) as f64 / format as f64,
+                    format_string,
+                    precision,
+                    (buffers_sent as f64 * 8.0 * bufsize as f64) / format as f64,
+                    format_string
+                );
+
+                total_buffers_sent += buffers_sent;
+            }
+
+            println!(
+                "Average rate over {} seconds: {:.*}{}",
+                time,
+                precision,
+                (total_buffers_sent as f64 * 8.0 * bufsize as f64) / (format * time) as f64,
+                format_string
+            );
             
             let received = recv.read_to_end(10).await;
         }
