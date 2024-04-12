@@ -1,12 +1,17 @@
 use clap::Parser;
 use quinn::ClientConfig;
+// use rustls::client;
 use std::io::prelude::*;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
 use std::str::FromStr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use ring::rand::*;
+
 use quic_perf::Proto;
+
+const MAX_DATAGRAM_SIZE: usize = 1350;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -200,14 +205,55 @@ async fn main() -> std::io::Result<()> {
         }
 
         Proto::Quiche => {
-            todo!("Quiche not finished");
+            let mut config =
+                quiche::Config::new(quiche::PROTOCOL_VERSION).expect("Quiche config failed");
+            config
+                .set_application_protos(&[b"quic-perf"])
+                .expect("ALPN configuration failed");
+            // WARNING: Turns off MitM protection.
+            config.verify_peer(false);
+            config.set_max_idle_timeout(5000);
+            config.set_max_recv_udp_payload_size(MAX_DATAGRAM_SIZE);
+            config.set_max_send_udp_payload_size(MAX_DATAGRAM_SIZE);
+            config.set_initial_max_data(10_000_000);
+            config.set_initial_max_stream_data_bidi_local(1_000_000);
+            config.set_initial_max_stream_data_bidi_remote(1_000_000);
+            config.set_initial_max_streams_bidi(100);
+            config.set_initial_max_streams_uni(100);
+            config.set_disable_active_migration(true);
+
+            let mut poll = mio::Poll::new().unwrap();
+            let mut events = mio::Events::with_capacity(1024);
+
+            let client_addr = "0.0.0.0:0".parse::<SocketAddr>().unwrap();
+
+            let mut socket = mio::net::UdpSocket::bind(client_addr).expect(&format!(
+                "Failed to bind socket with address {:?}",
+                client_addr
+            ));
+            poll.registry()
+                .register(&mut socket, mio::Token(0), mio::Interest::READABLE)
+                .expect("Failed to register socket to event poll");
+
+            // Connection ID setup
+            let mut scid = [0; quiche::MAX_CONN_ID_LEN];
+            SystemRandom::new().fill(&mut scid[..]).unwrap();
+            let scid = quiche::ConnectionId::from_ref(&scid);
+
+            // Prepare for connection
+            let socket_addr = socket.local_addr().unwrap();
+            let mut conn = quiche::connect(None, &scid, socket_addr, sk_addr, &mut config)
+                .expect("Failed to connect to server");
+
+            let mut buf = [0; 65535];
+            let mut out = [0; MAX_DATAGRAM_SIZE];
         }
 
         Proto::Quinn => {
             // TODO: Make this actually random so it doesn't potentially fail to bind.
-            // 
+            //
             // As is, if port 43422 is taken the client will just die.
-            let client_addr = "0.0.0.0:43422".parse::<SocketAddr>().unwrap();
+            let client_addr = "0.0.0.0:0".parse::<SocketAddr>().unwrap();
             println!("Connecting to {:?} on {:?}", sk_addr, client_addr);
             // Configure crypto
             let client_config = configure_client();
@@ -219,9 +265,7 @@ async fn main() -> std::io::Result<()> {
                 .await?;
             println!("Connected to {:?} on {:?}", sk_addr, client_addr);
 
-            let (mut send, mut recv) = connection
-                .open_bi()
-                .await?;
+            let (mut send, mut recv) = connection.open_bi().await?;
 
             // Send buffer size preference
             send.write_all(format!("{:?}", bufsize).as_bytes()).await?;
@@ -235,7 +279,7 @@ async fn main() -> std::io::Result<()> {
                 let now = Instant::now();
 
                 while now.elapsed() < Duration::from_secs(1) {
-                    let _ = recv.read_to_end(bufsize*2).await;
+                    let _ = recv.read_to_end(bufsize * 2).await;
                     buffers_sent += 1;
                 }
 

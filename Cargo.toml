@@ -10,6 +10,8 @@ rustls = { version = "*", features = ["dangerous_configuration", "quic"] }
 tokio = { version = "1", features = ["full"] }
 clap = { version = "*", features = ["derive"] }
 rcgen = "0.12.1"
+ring = "*"
+mio = "*"
 
 [[bin]]
 name = "server"

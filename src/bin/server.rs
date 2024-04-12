@@ -83,7 +83,6 @@ async fn main() {
 
     match backend {
         Proto::Tcp => {
-
             let listener = TcpListener::bind(sk_addr).await.unwrap();
 
             loop {
@@ -113,40 +112,36 @@ async fn main() {
                 while let Ok((mut send, mut recv)) = connection.accept_bi().await {
                     println!("Stream accepted.");
                     // Set up
-                    let send_bufsize = match from_utf8(&recv.read_to_end(
-                                                                128)
-                                                                .await
-                                                                .unwrap()) {
-                         Ok(s) => {
-                             let s = s.trim_matches(char::from(0));
-                             match s.parse::<usize>() {
-                                 Ok(s) => s,
-                                 Err(_) => {
-                                     println!("Parsing failed!");
-                                     return;
-                                 }
-                             }
-                         }
-                         Err(_) => {
-                             println!("Parsing failed!");
-                             return;
-                         }
+                    let send_bufsize = match from_utf8(&recv.read_to_end(128).await.unwrap()) {
+                        Ok(s) => {
+                            let s = s.trim_matches(char::from(0));
+                            match s.parse::<usize>() {
+                                Ok(s) => s,
+                                Err(_) => {
+                                    println!("Parsing failed!");
+                                    return;
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            println!("Parsing failed!");
+                            return;
+                        }
                     };
 
                     let send_buf = vec![0; send_bufsize];
                     loop {
                         match send.write_all(&send_buf).await {
-                            Ok(_) => {},
+                            Ok(_) => {}
                             Err(_) => break,
                         };
                     }
 
                     match send.finish().await {
-                        Ok(_) => {},
+                        Ok(_) => {}
                         Err(_) => {}
                     }
                 }
-
             }
         }
     }
