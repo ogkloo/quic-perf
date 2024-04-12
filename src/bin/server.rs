@@ -107,10 +107,11 @@ async fn main() {
             // Wait for clients.
             while let Some(handshake) = server.accept().await {
                 let connection = handshake.await.unwrap();
-                println!("Connection established from");
+                print!("Connection established... ");
 
                 // Wait for bidirectional streams.
                 while let Ok((mut send, mut recv)) = connection.accept_bi().await {
+                    println!("Stream accepted.");
                     // Set up
                     let send_bufsize = match from_utf8(&recv.read_to_end(
                                                                 128)

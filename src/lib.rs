@@ -16,7 +16,7 @@ pub enum Proto {
 /// changes to the whole API around private keys. 
 pub fn generate_self_signed_cert(
 ) -> Result<(rustls::Certificate, rustls::PrivateKey), Box<dyn Error>> {
-    let cert = rcgen::generate_simple_self_signed(vec!["localhost".into()]).unwrap();
+    let cert = rcgen::generate_simple_self_signed(vec!["localhost".into(), "jubliantfourier.net".into()]).unwrap();
     Ok((
         rustls::Certificate(cert.serialize_der().unwrap()),
         rustls::PrivateKey(cert.serialize_private_key_der()),
